@@ -1,0 +1,400 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "annotations": {
+            "description": "Application template for Red Hat JBoss BPM Suite 7.0 Business Central application.",
+            "iconClass": "icon-jboss",
+            "tags": "bpmsuite,jboss,xpaas",
+            "version": "1.4.0",
+            "openshift.io/display-name": "Red Hat JBoss BPM Suite 7.0 Business Central (Ephemeral with https)"
+        },
+        "name": "bpmsuite70-businesscentral"
+    },
+    "labels": {
+        "template": "bpmsuite70-businesscentral",
+        "xpaas": "1.4.0"
+    },
+    "message": "A new BPM Business Central application has been created in your project. The username/password for accessing the BPM Business Central interface is ${KIE_ADMIN_USER}/${KIE_ADMIN_PASSWORD}. Please be sure to create the \"bpmsuite-service-account\" service account and the secret named \"${HTTPS_SECRET}\" containing the ${HTTPS_KEYSTORE} file used for serving secure content.",
+    "parameters": [
+        {
+            "displayName": "Application Name",
+            "description": "The name for the application.",
+            "name": "APPLICATION_NAME",
+            "value": "myapp",
+            "required": true
+        },
+        {
+            "displayName": "EAP Admin User",
+            "description": "EAP administrator username",
+            "name": "ADMIN_USERNAME",
+            "value": "eapadmin",
+            "required": false
+        },
+        {
+            "displayName": "EAP Admin Password",
+            "description": "EAP administrator password",
+            "name": "ADMIN_PASSWORD",
+            "from": "[a-zA-Z]{6}[0-9]{1}!",
+            "generate": "expression",
+            "required": false
+        },
+        {
+            "displayName": "KIE Admin User",
+            "description": "KIE administrator username",
+            "name": "KIE_ADMIN_USER",
+            "value": "adminUser",
+            "required": false
+        },
+        {
+            "displayName": "KIE Admin Password",
+            "description": "KIE administrator password",
+            "name": "KIE_ADMIN_PWD",
+            "from": "[a-zA-Z]{6}[0-9]{1}!",
+            "generate": "expression",
+            "required": false
+        },
+        {
+            "displayName": "KIE Server Controller User",
+            "description": "KIE server controller username (Sets the org.kie.server.controller.user system property)",
+            "name": "KIE_SERVER_CONTROLLER_USER",
+            "value": "controllerUser",
+            "required": false
+        },
+        {
+            "displayName": "KIE Server Controller Password",
+            "description": "KIE server controller password (Sets the org.kie.server.controller.pwd system property)",
+            "name": "KIE_SERVER_CONTROLLER_PWD",
+            "from": "[a-zA-Z]{6}[0-9]{1}!",
+            "generate": "expression",
+            "required": false
+        },
+        {
+            "displayName": "KIE Server User",
+            "description": "KIE execution server username (Sets the org.kie.server.user system property)",
+            "name": "KIE_SERVER_USER",
+            "value": "executionUser",
+            "required": false
+        },
+        {
+            "displayName": "KIE Server Password",
+            "description": "KIE execution server password (Sets the org.kie.server.pwd system property)",
+            "name": "KIE_SERVER_PWD",
+            "from": "[a-zA-Z]{6}[0-9]{1}!",
+            "generate": "expression",
+            "required": false
+        },
+        {
+            "displayName": "Business Central Custom http Route Hostname",
+            "description": "Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>-buscentr-<project>.<default-domain-suffix>",
+            "name": "BUSINESS_CENTRAL_HOSTNAME_HTTP",
+            "value": "",
+            "required": false
+        },
+        {
+            "displayName": "Busines Central Custom https Route Hostname",
+            "description": "Custom hostname for https service route.  Leave blank for default hostname, e.g.: secure-<application-name>-buscentr-<project>.<default-domain-suffix>",
+            "name": "BUSINESS_CENTRAL_HOSTNAME_HTTPS",
+            "value": "",
+            "required": false
+        },
+        {
+            "displayName": "Server Keystore Secret Name",
+            "description": "The name of the secret containing the keystore file",
+            "name": "HTTPS_SECRET",
+            "value": "bpmsuite-app-secret",
+            "required": false
+        },
+        {
+            "displayName": "Server Keystore Filename",
+            "description": "The name of the keystore file within the secret",
+            "name": "HTTPS_KEYSTORE",
+            "value": "keystore.jks",
+            "required": false
+        },
+        {
+            "displayName": "Server Certificate Name",
+            "description": "The name associated with the server certificate",
+            "name": "HTTPS_NAME",
+            "value": "jboss",
+            "required": false
+        },
+        {
+            "displayName": "Server Keystore Password",
+            "description": "The password for the keystore and certificate",
+            "name": "HTTPS_PASSWORD",
+            "value": "mykeystorepass",
+            "required": false
+        },
+        {
+            "displayName": "ImageStream Namespace",
+            "description": "Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.",
+            "name": "IMAGE_STREAM_NAMESPACE",
+            "value": "openshift",
+            "required": true
+        }
+    ],
+    "objects": [
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "spec": {
+                "ports": [
+                    {
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "deploymentConfig": "${APPLICATION_NAME}-buscentr"
+                }
+            },
+            "metadata": {
+                "name": "${APPLICATION_NAME}-buscentr",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "The business central web server's http port."
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "spec": {
+                "ports": [
+                    {
+                        "port": 8443,
+                        "targetPort": 8443
+                    }
+                ],
+                "selector": {
+                    "deploymentConfig": "${APPLICATION_NAME}-buscentr"
+                }
+            },
+            "metadata": {
+                "name": "secure-${APPLICATION_NAME}-buscentr",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "The business central web server's https port."
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "id": "${APPLICATION_NAME}-buscentr-http",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-buscentr",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "Route for business central's http service."
+                }
+            },
+            "spec": {
+                "host": "${BUSINESS_CENTRAL_HOSTNAME_HTTP}",
+                "to": {
+                    "name": "${APPLICATION_NAME}-buscentr"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "id": "${APPLICATION_NAME}-buscentr-https",
+            "metadata": {
+                "name": "secure-${APPLICATION_NAME}-buscentr",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "Route for business central's https service."
+                }
+            },
+            "spec": {
+                "host": "${BUSINESS_CENTRAL_HOSTNAME_HTTPS}",
+                "to": {
+                    "name": "secure-${APPLICATION_NAME}-buscentr"
+                },
+                "tls": {
+                    "termination": "passthrough"
+                }
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-buscentr",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Recreate"
+                },
+                "triggers": [
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}-buscentr"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "namespace": "${IMAGE_STREAM_NAMESPACE}",
+                                "name": "jboss-bpmsuite70-businesscentral-openshift:1.0"
+                            }
+                        }
+                    },
+                    {
+                        "type": "ConfigChange"
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "deploymentConfig": "${APPLICATION_NAME}-buscentr"
+                },
+                "template": {
+                    "metadata": {
+                        "name": "${APPLICATION_NAME}-buscentr",
+                        "labels": {
+                            "deploymentConfig": "${APPLICATION_NAME}-buscentr",
+                            "application": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "serviceAccountName": "bpmsuite-service-account",
+                        "terminationGracePeriodSeconds": 60,
+                        "containers": [
+                            {
+                                "name": "${APPLICATION_NAME}-buscentr",
+                                "image": "jboss-bpmsuite70-businesscentral-openshift",
+                                "imagePullPolicy": "Always",
+                                "volumeMounts": [
+                                    {
+                                        "name": "bpmsuite-keystore-volume",
+                                        "mountPath": "/etc/bpmsuite-secret-volume",
+                                        "readOnly": true
+                                    }
+                                ],
+                                "livenessProbe": {
+                                    "exec": {
+                                        "command": [
+                                            "/bin/bash",
+                                            "-c",
+                                            "/opt/eap/bin/livenessProbe.sh"
+                                        ]
+                                    }
+                                },
+                                "readinessProbe": {
+                                    "exec": {
+                                        "command": [
+                                            "/bin/bash",
+                                            "-c",
+                                            "/opt/eap/bin/readinessProbe.sh"
+                                        ]
+                                    }
+                                },
+                                "ports": [
+                                    {
+                                        "name": "jolokia",
+                                        "containerPort": 8778,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "name": "http",
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "name": "https",
+                                        "containerPort": 8443,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "KIE_ADMIN_PWD",
+                                        "value": "${KIE_ADMIN_PWD}"
+                                    },
+                                    {
+                                        "name": "KIE_ADMIN_USER",
+                                        "value": "${KIE_ADMIN_USER}"
+                                    },
+                                    {
+                                        "name": "KIE_MBEANS",
+                                        "value": "${KIE_MBEANS}"
+                                    },
+                                    {
+                                        "name": "KIE_SERVER_CONTROLLER_PWD",
+                                        "value": "${KIE_SERVER_CONTROLLER_PWD}"
+                                    },
+                                    {
+                                        "name": "KIE_SERVER_CONTROLLER_USER",
+                                        "value": "${KIE_SERVER_CONTROLLER_USER}"
+                                    },
+                                    {
+                                        "name": "KIE_SERVER_PWD",
+                                        "value": "${KIE_SERVER_PWD}"
+                                    },
+                                    {
+                                        "name": "KIE_SERVER_USER",
+                                        "value": "${KIE_SERVER_USER}"
+                                    },
+                                    {
+                                        "name": "HTTPS_KEYSTORE_DIR",
+                                        "value": "/etc/bpmsuite-secret-volume"
+                                    },
+                                    {
+                                        "name": "HTTPS_KEYSTORE",
+                                        "value": "${HTTPS_KEYSTORE}"
+                                    },
+                                    {
+                                        "name": "HTTPS_NAME",
+                                        "value": "${HTTPS_NAME}"
+                                    },
+                                    {
+                                        "name": "HTTPS_PASSWORD",
+                                        "value": "${HTTPS_PASSWORD}"
+                                    },
+                                    {
+                                        "name": "ADMIN_USERNAME",
+                                        "value": "${ADMIN_USERNAME}"
+                                    },
+                                    {
+                                        "name": "ADMIN_PASSWORD",
+                                        "value": "${ADMIN_PASSWORD}"
+                                    },
+                                    {
+                                        "name": "PROBE_IMPL",
+                                        "value": "probe.eap.jolokia.EapProbe"
+                                    },
+                                    {
+                                        "name": "PROBE_DISABLE_BOOT_ERRORS_CHECK",
+                                        "value": "true"
+                                    }
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                            {
+                                "name": "bpmsuite-keystore-volume",
+                                "secret": {
+                                    "secretName": "${HTTPS_SECRET}"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
